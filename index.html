@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fc4c02">
+<meta name="description" content="YATRA — aplikasi pencatat perjalanan Pramuka Penggalang: lacak rute GPS, SKK Gerak Jalan, SKU digital, dan papan peringkat regu.">
+<title>YATRA — Catatan Perjalanan Pramuka Penggalang</title>
+
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<link rel="stylesheet" href="/css/app.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+
+<!-- ==================================================== LOGIN -->
+<section id="login-view" class="hidden">
+  <div class="login-box">
+    <img class="login-logo" src="/icons/icon-192.png" alt="Logo YATRA"
+         onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/isramiraj1443-ship-it/YATRA/1bece3303df65f85aad47888af7cfdf314825ead/icons/icon-192.png'">
+    <h1>YATRA</h1>
+    <div class="tag">Catatan Perjalanan Pramuka Penggalang</div>
+    <div class="login-card">
+      <div class="field">
+        <label for="l-user">UserID</label>
+        <input id="l-user" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="cth: DGW20261">
+      </div>
+      <div class="field">
+        <label for="l-pass">Password</label>
+        <input id="l-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary btn-block" id="loginBtn" onclick="YATRA.doLogin()">Masuk</button>
+      <div class="hint center mt">Lupa password? Hubungi Pembina atau Admin Gugus Depan.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================================================== APP -->
+<div id="app" class="hidden">
+
+  <header class="topbar">
+    <img class="brand-logo" src="/icons/icon-192.png" alt="YATRA"
+         onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/isramiraj1443-ship-it/YATRA/1bece3303df65f85aad47888af7cfdf314825ead/icons/icon-192.png'">
+    <div class="brand-txt">
+      <h1 id="hdrTitle">YATRA</h1>
+      <div class="sub" id="hdrSub">Dewan Penggalang</div>
+    </div>
+    <div class="topbar-right">
+      <button class="icon-btn" id="themeBtn" onclick="YATRA.toggleTheme()" title="Ganti tema">🌙</button>
+      <div id="avatar" class="avatar" onclick="YATRA.go('profile')">?</div>
+    </div>
+  </header>
+
+  <!-- ---------------------------------------------- BERANDA -->
+  <section id="view-home" class="pad">
+    <div id="homeBody"></div>
+  </section>
+
+  <!-- ---------------------------------------------- LACAK -->
+  <section id="view-track" class="pad hidden">
+    <div class="section-title">Lacak Rute <span id="trackBlink" class="rec-dot hidden"></span></div>
+    <div class="card">
+      <div id="trackMap"></div>
+      <div class="track-stats">
+        <div><div class="v" id="tDist">0.00</div><div class="l">km</div></div>
+        <div><div class="v" id="tTime">0:00</div><div class="l">waktu</div></div>
+        <div><div class="v" id="tSpeed">0.0</div><div class="l">km/jam</div></div>
+      </div>
+      <div class="track-stats" style="margin-top:0">
+        <div><div class="v" style="font-size:18px" id="tPace">—</div><div class="l">pace</div></div>
+        <div><div class="v" style="font-size:18px" id="tElev">0</div><div class="l">m naik</div></div>
+        <div><div class="v" style="font-size:18px" id="tAcc">—</div><div class="l">akurasi</div></div>
+      </div>
+      <div class="small muted center mb" id="trackStatus">Siap untuk mulai.</div>
+      <button class="btn btn-primary btn-block" id="trackBtn" onclick="YATRA.toggleTrack()">▶ Mulai Lacak</button>
+      <div class="grid2 mt">
+        <button class="btn btn-ghost hidden" id="pauseBtn" onclick="YATRA.togglePause()">⏸ Jeda</button>
+        <button class="btn btn-danger hidden" id="finishBtn" onclick="YATRA.finishTracking()">⏹ Selesai</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="small muted mb">Tips: aktifkan GPS presisi tinggi dan biarkan layar menyala untuk hasil terbaik. Rekaman otomatis tersimpan bila aplikasi tertutup.</div>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------- TAMBAH MANUAL -->
+  <section id="view-add" class="pad hidden">
+    <div class="section-title">Catat Perjalanan Manual</div>
+    <div class="card">
+      <div class="field">
+        <label class="req">Foto bukti (maks 200 KB, otomatis dikompres)</label>
+        <input type="file" id="f-photos" accept="image/*" multiple onchange="YATRA.onPhotoPick(event)">
+        <div class="thumbs" id="photoThumbs"></div>
+      </div>
+      <div class="field"><label>Impor GPX (Strava / Garmin / Xiaomi)</label>
+        <input type="file" id="f-gpx" accept=".gpx,text/xml" onchange="YATRA.onGpxPick(event)">
+        <div class="hint">Jarak, durasi, dan elevasi terisi otomatis dari berkas.</div>
+      </div>
+      <div class="field"><label class="req">Jenis Kegiatan</label><select id="f-type"></select></div>
+      <div class="field"><label>Judul</label><input id="f-title" placeholder="cth: Gerak jalan pagi"></div>
+      <div class="grid2">
+        <div class="field"><label class="req">Tanggal</label><input type="date" id="f-date"></div>
+        <div class="field"><label>Lokasi</label><input id="f-location" placeholder="Kota / tempat"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label class="req">Jarak (km)</label><input type="number" step="0.01" inputmode="decimal" id="f-distance" oninput="YATRA.calcPace()" placeholder="0.00"></div>
+        <div class="field"><label class="req">Durasi (menit)</label><input type="number" step="1" inputmode="numeric" id="f-duration" oninput="YATRA.calcPace()" placeholder="45"></div>
+      </div>
+      <div class="card card-flat center" style="padding:10px"><b id="f-pace">—</b></div>
+      <div class="field"><label>Elevasi naik (m)</label><input type="number" step="1" id="f-elev" placeholder="0"></div>
+      <div class="field"><label>Catatan</label><textarea id="f-notes" rows="2" placeholder="Ceritakan perjalananmu…"></textarea></div>
+      <button class="btn btn-primary btn-block" id="submitBtn" onclick="YATRA.submitManual()">✔ Simpan Perjalanan</button>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------- RIWAYAT -->
+  <section id="view-feed" class="pad hidden">
+    <div class="section-title">Riwayat Perjalanan</div>
+    <div class="card card-flat">
+      <div class="row" style="gap:8px">
+        <input id="feedSearch" placeholder="🔍 Cari judul / lokasi…" oninput="YATRA.searchFeed()" style="flex:1;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg-soft)">
+        <select id="feedRange" onchange="YATRA.loadFeed()" style="padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--bg-soft)">
+          <option value="all">Semua</option>
+          <option value="this_month">Bulan ini</option>
+          <option value="this_year">Tahun ini</option>
+        </select>
+      </div>
+    </div>
+    <div id="feedList"></div>
+  </section>
+
+  <!-- ---------------------------------------------- SKK -->
+  <section id="view-skk" class="pad hidden">
+    <div class="section-title">SKK Gerak Jalan</div>
+    <div id="skkBody"></div>
+  </section>
+
+  <!-- ---------------------------------------------- SKU -->
+  <section id="view-sku" class="pad hidden">
+    <div class="section-title">Checklist SKU Penggalang</div>
+    <div id="skuBody"></div>
+  </section>
+
+  <!-- ---------------------------------------------- STATISTIK -->
+  <section id="view-stat" class="pad hidden">
+    <div class="section-title">Statistik & Pencapaian</div>
+    <div id="statBody"></div>
+  </section>
+
+  <!-- ---------------------------------------------- PERINGKAT -->
+  <section id="view-board" class="pad hidden">
+    <div class="section-title">Papan Peringkat</div>
+    <div class="tabs" id="boardTabs">
+      <button data-tab="individu" class="active" onclick="YATRA.setBoardTab('individu')">Individu</button>
+      <button data-tab="regu" onclick="YATRA.setBoardTab('regu')">Regu</button>
+      <button data-tab="bukti" onclick="YATRA.setBoardTab('bukti')">Galeri Bukti</button>
+    </div>
+    <div id="boardBody"></div>
+  </section>
+
+  <!-- ---------------------------------------------- KARTU -->
+  <section id="view-card" class="pad hidden">
+    <div class="section-title">Kartu Pencapaian</div>
+    <div class="card"><canvas id="achCanvas" style="width:100%;border-radius:14px" width="1080" height="1350"></canvas></div>
+    <div class="grid3">
+      <button class="btn btn-primary" onclick="YATRA.downloadCard()">⬇ Unduh</button>
+      <button class="btn btn-ghost" onclick="YATRA.saveCardDrive()">☁ Drive</button>
+      <button class="btn btn-ghost" onclick="YATRA.shareCard()">↗ Bagikan</button>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------- PROFIL -->
+  <section id="view-profile" class="pad hidden">
+    <div class="section-title">Profil Anggota</div>
+    <div class="card">
+      <div class="field"><label>UserID (terkunci)</label><input id="p-userid" readonly></div>
+      <div class="field"><label class="req">Nama Lengkap</label><input id="p-name"></div>
+      <div class="field"><label class="req">Nama Panggilan</label><input id="p-nick"></div>
+      <div class="grid2">
+        <div class="field"><label class="req">Golongan</label>
+          <select id="p-golongan"><option value="">—</option><option>Siaga</option><option>Penggalang</option><option>Penegak</option><option>Pandega</option></select></div>
+        <div class="field"><label class="req">Putra/Putri</label>
+          <select id="p-gender"><option value="">—</option><option value="putra">Putra</option><option value="putri">Putri</option></select></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>SKU</label>
+          <select id="p-sku"><option value="">—</option><option value="ramu">Ramu</option><option value="rakit">Rakit</option><option value="terap">Terap</option></select></div>
+        <div class="field"><label>Regu</label><select id="p-regu"></select></div>
+      </div>
+      <div class="field"><label>No. HP / WA</label><input id="p-phone" inputmode="tel" placeholder="08…"></div>
+      <div class="field"><label>Foto Profil (maks 200 KB)</label>
+        <input type="file" id="p-photo" accept="image/*" onchange="YATRA.onProfilePhotoPick(event)">
+        <div class="thumbs" id="profilePhotoPreview"></div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="YATRA.saveProfile()">💾 Simpan Profil</button>
+    </div>
+
+    <div class="section-title">Keamanan</div>
+    <div class="card">
+      <div class="grid2">
+        <div class="field"><label>Password Lama</label><input type="password" id="p-old"></div>
+        <div class="field"><label>Password Baru</label><input type="password" id="p-new"></div>
+      </div>
+      <button class="btn btn-ghost btn-block" onclick="YATRA.changePassword()">Ubah Password</button>
+    </div>
+
+    <div class="card hidden" id="adminCardLink">
+      <button class="btn btn-primary btn-block" onclick="YATRA.go('admin')">⚙️ Panel Admin / Pembina</button>
+    </div>
+
+    <div class="card">
+      <button class="btn btn-ghost btn-block" onclick="YATRA.go('card')">🏅 Kartu Pencapaian</button>
+      <button class="btn btn-danger btn-block mt" onclick="YATRA.doLogout()">Keluar</button>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------- ADMIN -->
+  <section id="view-admin" class="pad hidden">
+    <div class="section-title">Panel Admin / Pembina</div>
+    <div class="tabs" id="adminTabs">
+      <button data-tab="ringkasan" class="active" onclick="YATRA.setAdminTab('ringkasan')">Ringkasan</button>
+      <button data-tab="anggota" onclick="YATRA.setAdminTab('anggota')">Anggota</button>
+      <button data-tab="validasi" onclick="YATRA.setAdminTab('validasi')">Validasi</button>
+      <button data-tab="skk" onclick="YATRA.setAdminTab('skk')">Syarat SKK</button>
+      <button data-tab="pengumuman" onclick="YATRA.setAdminTab('pengumuman')">Pengumuman</button>
+    </div>
+    <div id="adminBody"></div>
+  </section>
+
+  <!-- ---------------------------------------------- NAVIGASI -->
+  <nav class="bottom">
+    <button data-view="home" class="active" onclick="YATRA.go('home')"><span class="ic">🏠</span><span>Beranda</span></button>
+    <button data-view="feed" onclick="YATRA.go('feed')"><span class="ic">📖</span><span>Riwayat</span></button>
+    <button data-view="track" class="fab" onclick="YATRA.go('track')"><span class="ic">🥾</span><span>Lacak</span></button>
+    <button data-view="skk" onclick="YATRA.go('skk')"><span class="ic">🎗️</span><span>SKK</span></button>
+    <button data-view="board" onclick="YATRA.go('board')"><span class="ic">🏆</span><span>Peringkat</span></button>
+  </nav>
+</div>
+
+<!-- ==================================================== OVERLAY -->
+<div class="ovl" id="sheetModal" onclick="if(event.target===this)YATRA.closeSheet()">
+  <div class="sheet">
+    <div class="grip"></div>
+    <h3 id="sheetTitle"></h3>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
+<div class="ovl" id="confirmModal">
+  <div class="sheet">
+    <div class="grip"></div>
+    <h3 id="confirmTitle">Konfirmasi</h3>
+    <p id="confirmBody" class="muted"></p>
+    <div class="grid2 mt">
+      <button class="btn btn-ghost" id="confirmNo">Batal</button>
+      <button class="btn btn-primary" id="confirmYes">Ya, Lanjutkan</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- hidden: dipakai sebagai target tambah cepat -->
+<button class="hidden" id="addQuick" onclick="YATRA.go('add')"></button>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script src="/js/api.js" defer></script>
+<script src="/js/utils.js" defer></script>
+<script src="/js/charts.js" defer></script>
+<script src="/js/tracker.js" defer></script>
+<script src="/js/app.js" defer></script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a37afc78bc6a8bd0',t:'MTc4ODgzOTM5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
