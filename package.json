@@ -1,0 +1,37 @@
+{
+  "name": "yatra",
+  "version": "3.0.0",
+  "private": true,
+  "description": "YATRA — aplikasi pencatat perjalanan Pramuka Penggalang berbasis Google Apps Script + PWA.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build:gas": "node scripts/build-gas.mjs",
+    "dev": "npx --yes serve web -l 3000",
+    "lint": "npx --yes eslint web/js api scripts --no-eslintrc --env browser,es2021 --parser-options=ecmaVersion:2021,sourceType:module || true",
+    "push": "npm run build:gas && npx --yes @google/clasp push",
+    "deploy:gas": "npm run push && npx --yes @google/clasp deploy -d \"YATRA v3\"",
+    "open:gas": "npx --yes @google/clasp open",
+    "check:globals": "node scripts/check-globals.mjs",
+    "check": "node scripts/check-globals.mjs && node scripts/check-api-sync.mjs",
+    "build:single": "node scripts/build-single.mjs",
+    "build": "npm run build:gas && npm run build:single",
+    "smoke": "node scripts/smoke-test.mjs"
+  },
+  "keywords": [
+    "pramuka",
+    "penggalang",
+    "apps-script",
+    "pwa",
+    "gps",
+    "skk",
+    "sku",
+    "yatra"
+  ],
+  "devDependencies": {
+    "@google/clasp": "^2.4.2"
+  }
+}
