@@ -37,7 +37,7 @@ const REQUIRED = [
   'apps-script/03_Activity.gs', 'apps-script/04_SKK_SKU.gs',
   'apps-script/05_Regu_Gamifikasi.gs', 'apps-script/06_Admin_Report.gs',
   'apps-script/07_Router.gs', 'apps-script/Index.html', 'apps-script/appsscript.json',
-  'dist/Code.gs',
+  'build-output/Code.gs',
   'scripts/build-gas.mjs', 'scripts/build-single.mjs',
   'scripts/check-globals.mjs', 'scripts/check-api-sync.mjs', 'scripts/smoke-test.mjs',
   'package.json', 'vercel.json', 'README.md', 'LICENSE', '.gitignore', '.env.example'
@@ -123,7 +123,7 @@ const gasUrl = /AKfycb[A-Za-z0-9_-]{20,}/;
 const codeFiles = [];
 (function walk(dir) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
-    if (['node_modules', '.git', 'dist'].includes(e.name)) continue;
+    if (['node_modules', '.git', 'build-output'].includes(e.name)) continue;
     const full = join(dir, e.name);
     if (e.isDirectory()) walk(full);
     else if (/\.(js|mjs|gs|json|html)$/.test(e.name)) codeFiles.push(full);
