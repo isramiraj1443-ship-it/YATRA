@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Verifikasi kode & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Periksa sintaks JavaScript frontend
+        run: |
+          for f in js/*.js scripts/*.mjs; do
+            node --check "$f" || exit 1
+            echo "✓ $f"
+          done
+
+      - name: Periksa sintaks berkas Apps Script
+        run: |
+          mkdir -p /tmp/gscheck
+          for f in apps-script/*.gs; do
+            cp "$f" "/tmp/gscheck/$(basename "${f%.gs}").js"
+          done
+          for f in /tmp/gscheck/*.js; do
+            node --check "$f" || exit 1
+            echo "✓ $f"
+          done
+
+      - name: Pastikan tidak ada identifier global ganda
+        run: node scripts/check-globals.mjs
+
+      - name: Pastikan allowlist API sinkron (Apps Script vs proxy)
+        run: node scripts/check-api-sync.mjs
+
+      - name: Validasi JSON & manifest
+        run: |
+          for f in package.json vercel.json apps-script/appsscript.json manifest.webmanifest; do
+            node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" || exit 1
+            echo "✓ $f"
+          done
+
+      - name: Bangun ulang Index.html untuk Apps Script
+        run: node scripts/build-gas.mjs
+
+      - name: Pastikan Index.html sudah sinkron dengan sumber frontend
+        run: |
+          if ! git diff --quiet -- apps-script/Index.html; then
+            echo "::error::apps-script/Index.html tidak sinkron. Jalankan 'npm run build:gas' lalu commit hasilnya."
+            git diff --stat -- apps-script/Index.html
+            exit 1
+          fi
+          echo "✓ Index.html sinkron"
+
+      - name: Pastikan repo lengkap (berkas wajib, rujukan, manifest, PWA)
+        run: node scripts/check-repo.mjs
+
+      - name: Cek kebocoran rahasia
+        run: |
+          # URL deployment TIDAK boleh di-hardcode dalam kode — harus lewat
+          # environment variable GAS_WEB_APP_URL. Menyebutkannya di dokumentasi
+          # (*.md) diperbolehkan, karena URL /exec bersifat publik dan seluruh
+          # akses tetap dijaga oleh token sesi serta allowlist fungsi.
+          if grep -rnE "AKfycb[A-Za-z0-9_-]{20,}" \
+               --include="*.js" --include="*.mjs" --include="*.gs" \
+               --include="*.html" --include="*.json" \
+               --exclude-dir=node_modules . ; then
+            echo "::error::URL deployment Apps Script ter-hardcode di dalam kode. Pakai env GAS_WEB_APP_URL."
+            exit 1
+          fi
+          # Berkas .env asli tidak boleh ikut ter-commit
+          if git ls-files --error-unmatch .env .env.local >/dev/null 2>&1; then
+            echo "::error::.env / .env.local tidak boleh di-commit."
+            exit 1
+          fi
+          echo "✓ Tidak ada rahasia yang terdeteksi"
