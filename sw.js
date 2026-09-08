@@ -2,7 +2,7 @@
    YATRA v3 — Service Worker
    Strategi: app shell precache (cache-first) + network-first untuk /api.
    ========================================================================== */
-const VERSION    = 'yatra-v3.0.0';
+const VERSION    = 'yatra-v3.1.0';
 const SHELL      = VERSION + '-shell';
 const RUNTIME    = VERSION + '-runtime';
 
@@ -16,9 +16,11 @@ const SHELL_ASSETS = [
   '/js/charts.js',
   '/js/tracker.js',
   '/js/app.js',
+  '/js/biometric.js',
   '/manifest.webmanifest',
   '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/icons/icon-512.png',
+  '/icons/background-yatra.jpg'
 ];
 
 self.addEventListener('install', (e) => {
