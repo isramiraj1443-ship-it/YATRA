@@ -32,9 +32,35 @@
       </div>
       <div class="field">
         <label for="l-pass">Password</label>
-        <input id="l-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+        <div class="pass-wrap">
+          <input id="l-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+          <button type="button" class="pass-toggle" data-target="l-pass"
+                  aria-label="Tampilkan password" aria-pressed="false"
+                  onclick="YATRA.togglePass(this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
       </div>
       <button class="btn btn-primary btn-block" id="loginBtn" onclick="YATRA.doLogin()">Masuk</button>
+
+      <div id="bioLoginWrap" class="hidden">
+        <div class="bio-sep">atau</div>
+        <button class="btn btn-ghost btn-block btn-bio" id="bioLoginBtn" onclick="YATRA.doBioLogin()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 11v4M8.5 4.7a7 7 0 0 1 7 0"></path>
+            <path d="M5 8.5a10 10 0 0 1 14 0"></path>
+            <path d="M8 12a4 4 0 0 1 8 0v3a3 3 0 0 1-3 3"></path>
+            <path d="M12 19.5c-2.5 0-4-1.5-4-4"></path>
+          </svg>
+          <span id="bioLoginLabel">Masuk dengan Biometrik</span>
+        </button>
+      </div>
+
       <div class="hint center mt">Lupa password? Hubungi Pembina atau Admin Gugus Depan.</div>
     </div>
   </div>
@@ -203,10 +229,48 @@
     <div class="section-title">Keamanan</div>
     <div class="card">
       <div class="grid2">
-        <div class="field"><label>Password Lama</label><input type="password" id="p-old"></div>
-        <div class="field"><label>Password Baru</label><input type="password" id="p-new"></div>
+        <div class="field"><label>Password Lama</label><div class="pass-wrap"><input type="password" id="p-old"><button type="button" class="pass-toggle" data-target="p-old" aria-label="Tampilkan password lama" aria-pressed="false" onclick="YATRA.togglePass(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
+        <div class="field"><label>Password Baru</label><div class="pass-wrap"><input type="password" id="p-new"><button type="button" class="pass-toggle" data-target="p-new" aria-label="Tampilkan password baru" aria-pressed="false" onclick="YATRA.togglePass(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
       </div>
       <button class="btn btn-ghost btn-block" onclick="YATRA.changePassword()">Ubah Password</button>
+    </div>
+
+    <div class="section-title">Login Biometrik</div>
+    <div class="card" id="bioCard">
+      <div class="bio-status" id="bioStatus">
+        <span class="bio-dot"></span>
+        <span id="bioStatusText">Memeriksa dukungan perangkat…</span>
+      </div>
+
+      <div id="bioEnrollForm" class="hidden mt">
+        <p class="hint">
+          Masukkan password Anda untuk mengaitkan sidik jari / Face ID perangkat ini
+          dengan akun Anda. Password disimpan <b>terenkripsi</b> di perangkat dan
+          hanya terbuka setelah verifikasi biometrik berhasil.
+        </p>
+        <div class="field"><label>Password Anda</label><div class="pass-wrap"><input type="password" id="p-bio-pass"><button type="button" class="pass-toggle" data-target="p-bio-pass" aria-label="Tampilkan password" aria-pressed="false" onclick="YATRA.togglePass(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
+        <button class="btn btn-primary btn-block btn-bio" onclick="YATRA.bioEnroll()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 11v4M8.5 4.7a7 7 0 0 1 7 0"></path>
+            <path d="M5 8.5a10 10 0 0 1 14 0"></path>
+            <path d="M8 12a4 4 0 0 1 8 0v3a3 3 0 0 1-3 3"></path>
+            <path d="M12 19.5c-2.5 0-4-1.5-4-4"></path>
+          </svg>
+          Daftarkan Biometrik
+        </button>
+        <p class="hint mt">
+          ⚠️ Aktifkan hanya di perangkat pribadi. Siapa pun yang dapat membuka kunci
+          perangkat ini akan bisa masuk sebagai Anda. Pendaftaran berlaku khusus untuk
+          perangkat dan browser ini, dan otomatis dibatalkan bila password diubah.
+        </p>
+      </div>
+
+      <div id="bioRemoveWrap" class="hidden mt">
+        <button class="btn btn-danger btn-block" onclick="YATRA.bioRemove()">
+          Hapus Pendaftaran Biometrik
+        </button>
+      </div>
     </div>
 
     <div class="card hidden" id="adminCardLink">
@@ -273,6 +337,7 @@
 <script src="/js/utils.js" defer></script>
 <script src="/js/charts.js" defer></script>
 <script src="/js/tracker.js" defer></script>
+<script src="/js/biometric.js" defer></script>
 <script src="/js/app.js" defer></script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a37afc78bc6a8bd0',t:'MTc4ODgzOTM5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a37bef76e89eccce',t:'MTc4ODg0OTM1MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
