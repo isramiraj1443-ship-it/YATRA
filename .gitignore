@@ -1,0 +1,34 @@
+# Dependensi
+node_modules/
+.pnp/
+.pnp.js
+
+# Build & cache
+dist/
+# ...tetapi berkas tunggal siap-tempel WAJIB ikut ter-commit
+!dist/
+!dist/Code.gs
+build/
+.next/
+.vercel/
+.turbo/
+.cache/
+
+# Lingkungan (JANGAN pernah di-commit)
+.env
+.env.*
+!.env.example
+.clasprc.json
+apps-script/.clasp.json
+
+# Editor & OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Log
+*.log
+npm-debug.log*
