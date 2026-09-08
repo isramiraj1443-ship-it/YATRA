@@ -252,13 +252,49 @@ nav.bottom button.fab span:last-child{display:none}
 .toast.ok{border-color:var(--ok)} .toast.err{border-color:var(--danger)} .toast.warn{border-color:var(--warn)}
 
 /* ------------------------------------------------------------- LOGIN */
-#login-view{min-height:100dvh;display:grid;place-items:center;padding:24px}
+#login-view{min-height:100dvh;display:grid;place-items:center;padding:24px;position:relative;isolation:isolate}
+/* Latar belakang ilustrasi: dipasang sebagai lapisan tersendiri agar dapat
+   diredupkan tanpa memengaruhi keterbacaan teks di atasnya. */
+#login-view::before{content:'';position:absolute;inset:0;z-index:-2;
+  background:url('/icons/background-yatra.jpg') center/cover no-repeat;
+  background-attachment:fixed}
+#login-view::after{content:'';position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(180deg,rgba(10,10,12,.62) 0%,rgba(10,10,12,.78) 45%,rgba(10,10,12,.94) 100%)}
+[data-theme="light"] #login-view::after{
+  background:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.75) 45%,rgba(255,255,255,.92) 100%)}
+@media (max-width:640px){#login-view::before{background-attachment:scroll}}
 .login-box{width:100%;max-width:400px;text-align:center}
 .login-logo{width:84px;height:84px;border-radius:26px;margin:0 auto 18px;box-shadow:var(--shadow-brand);object-fit:cover;background:var(--brand)}
 .login-box h1{font-size:30px;margin:0 0 4px;font-weight:900;letter-spacing:-1px;
   background:linear-gradient(135deg,var(--brand),var(--brand-2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .login-box .tag{color:var(--muted);font-size:13px;margin-bottom:26px}
-.login-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;text-align:left;box-shadow:var(--shadow)}
+.login-card{background:color-mix(in srgb,var(--card) 88%,transparent);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;text-align:left;
+  box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.login-box .tag{text-shadow:0 1px 8px rgba(0,0,0,.6)}
+
+/* ------------------------------------------- INPUT PASSWORD + TOGGLE */
+.pass-wrap{position:relative}
+.pass-wrap input{padding-right:46px}
+.pass-toggle{position:absolute;top:50%;right:6px;transform:translateY(-50%);
+  width:36px;height:36px;display:grid;place-items:center;cursor:pointer;
+  background:transparent;border:0;border-radius:10px;color:var(--muted);padding:0}
+.pass-toggle:hover{color:var(--text);background:var(--line)}
+.pass-toggle:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.pass-toggle svg{width:20px;height:20px;pointer-events:none}
+
+/* ------------------------------------------------------- BIOMETRIK */
+.bio-sep{display:flex;align-items:center;gap:12px;margin:16px 0;
+  color:var(--muted);font-size:12px}
+.bio-sep::before,.bio-sep::after{content:'';flex:1;height:1px;background:var(--line)}
+.btn-bio{display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-bio svg{width:20px;height:20px}
+.bio-status{display:flex;align-items:center;gap:10px;padding:12px 14px;
+  border:1px solid var(--line);border-radius:var(--r);background:var(--bg-soft);font-size:13px}
+.bio-status.on{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.bio-dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none}
+.bio-status.on .bio-dot{background:var(--ok)}
 
 /* ------------------------------------------------------------- MISC */
 .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -297,9 +333,35 @@ canvas.chart{width:100%;height:180px;display:block}
       </div>
       <div class="field">
         <label for="l-pass">Password</label>
-        <input id="l-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+        <div class="pass-wrap">
+          <input id="l-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+          <button type="button" class="pass-toggle" data-target="l-pass"
+                  aria-label="Tampilkan password" aria-pressed="false"
+                  onclick="YATRA.togglePass(this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
       </div>
       <button class="btn btn-primary btn-block" id="loginBtn" onclick="YATRA.doLogin()">Masuk</button>
+
+      <div id="bioLoginWrap" class="hidden">
+        <div class="bio-sep">atau</div>
+        <button class="btn btn-ghost btn-block btn-bio" id="bioLoginBtn" onclick="YATRA.doBioLogin()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 11v4M8.5 4.7a7 7 0 0 1 7 0"></path>
+            <path d="M5 8.5a10 10 0 0 1 14 0"></path>
+            <path d="M8 12a4 4 0 0 1 8 0v3a3 3 0 0 1-3 3"></path>
+            <path d="M12 19.5c-2.5 0-4-1.5-4-4"></path>
+          </svg>
+          <span id="bioLoginLabel">Masuk dengan Biometrik</span>
+        </button>
+      </div>
+
       <div class="hint center mt">Lupa password? Hubungi Pembina atau Admin Gugus Depan.</div>
     </div>
   </div>
@@ -468,10 +530,48 @@ canvas.chart{width:100%;height:180px;display:block}
     <div class="section-title">Keamanan</div>
     <div class="card">
       <div class="grid2">
-        <div class="field"><label>Password Lama</label><input type="password" id="p-old"></div>
-        <div class="field"><label>Password Baru</label><input type="password" id="p-new"></div>
+        <div class="field"><label>Password Lama</label><div class="pass-wrap"><input type="password" id="p-old"><button type="button" class="pass-toggle" data-target="p-old" aria-label="Tampilkan password lama" aria-pressed="false" onclick="YATRA.togglePass(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
+        <div class="field"><label>Password Baru</label><div class="pass-wrap"><input type="password" id="p-new"><button type="button" class="pass-toggle" data-target="p-new" aria-label="Tampilkan password baru" aria-pressed="false" onclick="YATRA.togglePass(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
       </div>
       <button class="btn btn-ghost btn-block" onclick="YATRA.changePassword()">Ubah Password</button>
+    </div>
+
+    <div class="section-title">Login Biometrik</div>
+    <div class="card" id="bioCard">
+      <div class="bio-status" id="bioStatus">
+        <span class="bio-dot"></span>
+        <span id="bioStatusText">Memeriksa dukungan perangkat…</span>
+      </div>
+
+      <div id="bioEnrollForm" class="hidden mt">
+        <p class="hint">
+          Masukkan password Anda untuk mengaitkan sidik jari / Face ID perangkat ini
+          dengan akun Anda. Password disimpan <b>terenkripsi</b> di perangkat dan
+          hanya terbuka setelah verifikasi biometrik berhasil.
+        </p>
+        <div class="field"><label>Password Anda</label><div class="pass-wrap"><input type="password" id="p-bio-pass"><button type="button" class="pass-toggle" data-target="p-bio-pass" aria-label="Tampilkan password" aria-pressed="false" onclick="YATRA.togglePass(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
+        <button class="btn btn-primary btn-block btn-bio" onclick="YATRA.bioEnroll()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 11v4M8.5 4.7a7 7 0 0 1 7 0"></path>
+            <path d="M5 8.5a10 10 0 0 1 14 0"></path>
+            <path d="M8 12a4 4 0 0 1 8 0v3a3 3 0 0 1-3 3"></path>
+            <path d="M12 19.5c-2.5 0-4-1.5-4-4"></path>
+          </svg>
+          Daftarkan Biometrik
+        </button>
+        <p class="hint mt">
+          ⚠️ Aktifkan hanya di perangkat pribadi. Siapa pun yang dapat membuka kunci
+          perangkat ini akan bisa masuk sebagai Anda. Pendaftaran berlaku khusus untuk
+          perangkat dan browser ini, dan otomatis dibatalkan bila password diubah.
+        </p>
+      </div>
+
+      <div id="bioRemoveWrap" class="hidden mt">
+        <button class="btn btn-danger btn-block" onclick="YATRA.bioRemove()">
+          Hapus Pendaftaran Biometrik
+        </button>
+      </div>
     </div>
 
     <div class="card hidden" id="adminCardLink">
@@ -581,8 +681,32 @@ canvas.chart{width:100%;height:180px;display:block}
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fn: fn, token: self.token, args: args })
       }).then(function (res) {
-        if (!res.ok) throw new Error('Server merespons ' + res.status);
-        return res.json();
+        // Selalu baca isi respons: server mengirim pesan error yang berguna
+        // (mis. "GAS_WEB_APP_URL belum diatur") justru saat status bukan 2xx.
+        return res.text().then(function (text) {
+          var data = null;
+          try { data = JSON.parse(text); } catch (e) { /* bukan JSON */ }
+
+          if (!res.ok) {
+            if (data && data.error) {
+              var msg = data.error;
+              if (data.hint) msg += ' (' + String(data.hint).slice(0, 120) + ')';
+              throw new Error(msg);
+            }
+            if (res.status === 500) {
+              throw new Error(
+                'Server bermasalah (500). Biasanya environment variable ' +
+                'GAS_WEB_APP_URL belum diatur di Vercel, atau perlu Redeploy.'
+              );
+            }
+            if (res.status === 404) throw new Error('Endpoint /api tidak ditemukan (404). Periksa vercel.json.');
+            if (res.status === 504) throw new Error('Server Apps Script tidak merespons tepat waktu.');
+            throw new Error('Server merespons ' + res.status + '.');
+          }
+
+          if (!data) throw new Error('Respons server tidak valid: ' + String(text).slice(0, 120));
+          return data;
+        });
       }).then(function (data) {
         var d = self._normalize(data);
         if (d && d.ok === false && /sesi/i.test(d.error || '')) {
@@ -1209,6 +1333,290 @@ canvas.chart{width:100%;height:180px;display:block}
 })(window);
 
 
+/* ---- biometric.js ---- */
+/**
+ * YATRA v3 — Login Biometrik (WebAuthn / Web Authentication API)
+ *
+ * Cara kerja & batasannya — penting dipahami:
+ *
+ * WebAuthn yang sesungguhnya memerlukan server yang menyimpan public key dan
+ * memverifikasi signature setiap kali login. Backend YATRA berjalan di Google
+ * Apps Script yang tidak menyediakan primitif kriptografi untuk itu.
+ *
+ * Karena itu modul ini memakai pendekatan **kunci perangkat**:
+ *   1. Saat mendaftar, browser membuat kredensial platform (sidik jari / Face
+ *      ID / PIN perangkat). Kredensial itu terkunci di secure hardware HP.
+ *   2. Kita menyimpan credentialId + kredensial login TERENKRIPSI di
+ *      localStorage. Kunci enkripsinya diturunkan dari credentialId lewat
+ *      PBKDF2 (150.000 iterasi, SHA-256) menggunakan Web Crypto.
+ *   3. Saat login, sidik jari membuka kredensial tersebut, lalu dikirim ke
+ *      server seperti login biasa.
+ *
+ * Artinya: biometrik di sini adalah **kunci akses lokal ke perangkat ini**,
+ * bukan faktor autentikasi yang diverifikasi server. Ini setara dengan cara
+ * kebanyakan aplikasi perbankan menyimpan "quick login" — nyaman dan jauh
+ * lebih aman daripada menyimpan password polos, tetapi bukan pengganti
+ * autentikasi sisi server.
+ *
+ * Konsekuensi yang perlu diketahui pengguna (ditampilkan di UI):
+ *   • Pendaftaran berlaku per perangkat DAN per browser.
+ *   • Siapa pun yang bisa membuka kunci perangkat dapat masuk sebagai Anda.
+ *   • Ganti password → pendaftaran otomatis dibatalkan.
+ *   • Jangan diaktifkan di perangkat bersama.
+ *
+ * Memerlukan HTTPS (atau localhost). Di Apps Script (iframe) WebAuthn
+ * diblokir oleh browser, jadi fitur ini otomatis disembunyikan di sana.
+ */
+(function (global) {
+  'use strict';
+
+  var STORE = 'yatra_bio_v3';
+  var LEGACY = ['yatra_bio_v1', 'yatra_bio_v2'];
+
+  /* ------------------------------------------------------- penyimpanan */
+  function read() {
+    try { return JSON.parse(localStorage.getItem(STORE) || 'null'); }
+    catch (e) { return null; }
+  }
+  function write(v) {
+    try { localStorage.setItem(STORE, JSON.stringify(v)); return true; }
+    catch (e) { return false; }
+  }
+  function wipe() {
+    try {
+      localStorage.removeItem(STORE);
+      LEGACY.forEach(function (k) { localStorage.removeItem(k); });
+    } catch (e) {}
+  }
+
+  /* ----------------------------------------------------------- base64 */
+  function b64(buf) {
+    var b = new Uint8Array(buf), s = '';
+    for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+    return btoa(s);
+  }
+  function unb64(str) {
+    var s = atob(str), b = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+    return b;
+  }
+
+  /* ------------------------------------------------------- kriptografi */
+  function deriveKey(secret, salt) {
+    var enc = new TextEncoder();
+    return crypto.subtle
+      .importKey('raw', enc.encode(secret), 'PBKDF2', false, ['deriveKey'])
+      .then(function (base) {
+        return crypto.subtle.deriveKey(
+          { name: 'PBKDF2', salt: salt, iterations: 150000, hash: 'SHA-256' },
+          base,
+          { name: 'AES-GCM', length: 256 },
+          false,
+          ['encrypt', 'decrypt']
+        );
+      });
+  }
+
+  function encrypt(plain, secret) {
+    var salt = crypto.getRandomValues(new Uint8Array(16));
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    return deriveKey(secret, salt).then(function (key) {
+      return crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        new TextEncoder().encode(plain)
+      );
+    }).then(function (ct) {
+      return { salt: b64(salt), iv: b64(iv), data: b64(ct) };
+    });
+  }
+
+  function decrypt(payload, secret) {
+    return deriveKey(secret, unb64(payload.salt)).then(function (key) {
+      return crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: unb64(payload.iv) },
+        key,
+        unb64(payload.data)
+      );
+    }).then(function (buf) {
+      return new TextDecoder().decode(buf);
+    });
+  }
+
+  /* ------------------------------------------------------ ketersediaan */
+  var Bio = {
+    /** Apakah browser & perangkat mendukung biometrik platform? */
+    supported: function () {
+      if (!global.PublicKeyCredential) return Promise.resolve(false);
+      if (!global.isSecureContext) return Promise.resolve(false);
+      if (!(global.crypto && global.crypto.subtle)) return Promise.resolve(false);
+      // Di dalam iframe (Apps Script) WebAuthn diblokir browser.
+      try { if (global.self !== global.top) return Promise.resolve(false); } catch (e) { return Promise.resolve(false); }
+      return PublicKeyCredential
+        .isUserVerifyingPlatformAuthenticatorAvailable()
+        .then(function (ok) { return !!ok; })
+        .catch(function () { return false; });
+    },
+
+    /** Sudah ada pendaftaran di perangkat ini? */
+    enrolled: function () {
+      var d = read();
+      return !!(d && d.credentialId && d.payload);
+    },
+
+    /** UserID yang terdaftar (untuk ditampilkan di tombol login). */
+    username: function () {
+      var d = read();
+      return (d && d.username) || '';
+    },
+
+    /** Nama panggilan, agar sapaan di tombol terasa personal. */
+    nickname: function () {
+      var d = read();
+      return (d && d.nickname) || '';
+    },
+
+    /**
+     * Daftarkan biometrik untuk akun ini.
+     * @param {string} username
+     * @param {string} password  disimpan terenkripsi, tidak pernah polos
+     * @param {string} nickname
+     */
+    enroll: function (username, password, nickname) {
+      if (!username || !password) {
+        return Promise.reject(new Error('UserID dan password wajib diisi.'));
+      }
+      return Bio.supported().then(function (ok) {
+        if (!ok) throw new Error('Perangkat atau browser ini tidak mendukung login biometrik.');
+
+        var challenge = crypto.getRandomValues(new Uint8Array(32));
+        var userId = crypto.getRandomValues(new Uint8Array(16));
+
+        return navigator.credentials.create({
+          publicKey: {
+            challenge: challenge,
+            rp: { name: 'YATRA', id: location.hostname },
+            user: {
+              id: userId,
+              name: username,
+              displayName: nickname || username
+            },
+            pubKeyCredParams: [
+              { type: 'public-key', alg: -7 },    // ES256
+              { type: 'public-key', alg: -257 }   // RS256
+            ],
+            authenticatorSelection: {
+              authenticatorAttachment: 'platform',
+              userVerification: 'required',
+              residentKey: 'preferred'
+            },
+            timeout: 60000,
+            attestation: 'none'
+          }
+        });
+      }).then(function (cred) {
+        if (!cred) throw new Error('Pendaftaran dibatalkan.');
+        var credentialId = b64(cred.rawId);
+        return encrypt(
+          JSON.stringify({ u: username, p: password }),
+          credentialId
+        ).then(function (payload) {
+          var saved = write({
+            credentialId: credentialId,
+            username: username,
+            nickname: nickname || '',
+            payload: payload,
+            host: location.hostname,
+            at: Date.now()
+          });
+          if (!saved) throw new Error('Gagal menyimpan data biometrik di perangkat.');
+          return true;
+        });
+      }).catch(function (err) {
+        throw new Error(friendly(err));
+      });
+    },
+
+    /**
+     * Verifikasi sidik jari lalu kembalikan kredensial yang tersimpan.
+     * @returns {Promise<{username:string,password:string}>}
+     */
+    authenticate: function () {
+      var d = read();
+      if (!d || !d.credentialId || !d.payload) {
+        return Promise.reject(new Error('Belum ada pendaftaran biometrik di perangkat ini.'));
+      }
+      if (d.host && d.host !== location.hostname) {
+        wipe();
+        return Promise.reject(new Error('Alamat situs berubah. Silakan daftarkan biometrik lagi.'));
+      }
+
+      var challenge = crypto.getRandomValues(new Uint8Array(32));
+
+      return navigator.credentials.get({
+        publicKey: {
+          challenge: challenge,
+          allowCredentials: [{
+            type: 'public-key',
+            id: unb64(d.credentialId),
+            transports: ['internal']
+          }],
+          userVerification: 'required',
+          timeout: 60000
+        }
+      }).then(function (assertion) {
+        if (!assertion) throw new Error('Verifikasi dibatalkan.');
+        return decrypt(d.payload, d.credentialId);
+      }).then(function (json) {
+        var o = JSON.parse(json);
+        return { username: o.u, password: o.p };
+      }).catch(function (err) {
+        throw new Error(friendly(err));
+      });
+    },
+
+    /** Hapus pendaftaran dari perangkat ini. */
+    remove: function () { wipe(); return Promise.resolve(true); },
+
+    /** Info ringkas untuk ditampilkan di halaman profil. */
+    info: function () {
+      var d = read();
+      if (!d) return null;
+      return {
+        username: d.username,
+        nickname: d.nickname,
+        at: d.at ? new Date(d.at) : null
+      };
+    }
+  };
+
+  /** Ubah pesan error teknis WebAuthn menjadi bahasa yang dimengerti. */
+  function friendly(err) {
+    var name = (err && err.name) || '';
+    var msg = (err && err.message) || 'Terjadi kesalahan.';
+
+    if (name === 'NotAllowedError') {
+      return 'Verifikasi dibatalkan atau melebihi batas waktu. Silakan coba lagi.';
+    }
+    if (name === 'InvalidStateError') {
+      return 'Perangkat ini sudah pernah didaftarkan untuk akun tersebut.';
+    }
+    if (name === 'NotSupportedError') {
+      return 'Perangkat ini tidak memiliki sensor biometrik yang didukung.';
+    }
+    if (name === 'SecurityError') {
+      return 'Login biometrik memerlukan koneksi HTTPS yang aman.';
+    }
+    if (name === 'AbortError') {
+      return 'Proses dibatalkan.';
+    }
+    return msg;
+  }
+
+  global.Bio = Bio;
+})(window);
+
+
 /* ---- app.js ---- */
 /* ==========================================================================
    YATRA v3 — app.js : state, routing, dan seluruh tampilan
@@ -1239,12 +1647,13 @@ canvas.chart{width:100%;height:180px;display:block}
   }
 
   /* =============================================================== LOGIN */
-  function doLogin() {
-    var u = Util.val('l-user'), p = Util.val('l-pass');
+  function doLogin(cred) {
+    var u = (cred && cred.username) || Util.val('l-user');
+    var p = (cred && cred.password) || Util.val('l-pass');
     if (!u || !p) return Util.warn('UserID dan password wajib diisi.');
     var btn = $('loginBtn');
     btn.disabled = true; btn.textContent = 'Memproses…';
-    Api.call('gsLogin', u, p).then(function (r) {
+    return Api.call('gsLogin', u, p).then(function (r) {
       if (!r.ok) throw new Error(r.error || 'Login gagal.');
       Api.setToken(r.token);
       S.user = r.user;
@@ -1266,6 +1675,126 @@ canvas.chart{width:100%;height:180px;display:block}
       $('app').classList.add('hidden');
       $('login-view').classList.remove('hidden');
       Util.setVal('l-pass', '');
+      refreshBioLogin();
+    });
+  }
+
+  /* ========================================================= PASSWORD UI */
+  /** Tombol mata: tampilkan / sembunyikan isi field password. */
+  function togglePass(btn) {
+    var input = $(btn.getAttribute('data-target'));
+    if (!input) return;
+    var show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+    btn.setAttribute('aria-label', (show ? 'Sembunyikan' : 'Tampilkan') + ' password');
+    btn.innerHTML = show
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>' +
+        '<path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>' +
+        '<path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path>' +
+        '<line x1="1" y1="1" x2="23" y2="23"></line></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>' +
+        '<circle cx="12" cy="12" r="3"></circle></svg>';
+    // Kembalikan fokus supaya alur pengetikan tidak terputus.
+    try { input.focus({ preventScroll: true }); } catch (e) {}
+  }
+
+  /* ============================================================ BIOMETRIK */
+  /** Tampilkan tombol "Masuk dengan Biometrik" bila perangkat sudah terdaftar. */
+  function refreshBioLogin() {
+    var wrap = $('bioLoginWrap');
+    if (!wrap || !global.Bio) return;
+    Bio.supported().then(function (ok) {
+      if (!ok || !Bio.enrolled()) { wrap.classList.add('hidden'); return; }
+      var who = Bio.nickname() || Bio.username();
+      $('bioLoginLabel').textContent = who ? 'Masuk sebagai ' + who : 'Masuk dengan Biometrik';
+      wrap.classList.remove('hidden');
+      // Isikan UserID agar jelas akun mana yang akan dipakai.
+      if (!Util.val('l-user')) Util.setVal('l-user', Bio.username());
+    });
+  }
+
+  function doBioLogin() {
+    var btn = $('bioLoginBtn');
+    btn.disabled = true;
+    var label = $('bioLoginLabel'), original = label.textContent;
+    label.textContent = 'Memverifikasi…';
+
+    Bio.authenticate().then(function (cred) {
+      label.textContent = 'Masuk…';
+      return doLogin(cred);
+    }).catch(function (e) {
+      Util.err(e.message);
+    }).then(function () {
+      btn.disabled = false; label.textContent = original;
+    });
+  }
+
+  /** Perbarui kartu biometrik di halaman Profil. */
+  function refreshBioCard() {
+    var card = $('bioCard');
+    if (!card || !global.Bio) return;
+    var box = $('bioStatus'), txt = $('bioStatusText');
+    var form = $('bioEnrollForm'), rm = $('bioRemoveWrap');
+
+    Bio.supported().then(function (ok) {
+      if (!ok) {
+        box.classList.remove('on');
+        txt.innerHTML = 'Perangkat atau browser ini <b>tidak mendukung</b> login biometrik. ' +
+                        'Fitur ini memerlukan HTTPS serta sensor sidik jari / Face ID.';
+        form.classList.add('hidden'); rm.classList.add('hidden');
+        return;
+      }
+      var info = Bio.info();
+      if (info && Bio.enrolled()) {
+        var same = S.user && info.username === S.user.username;
+        box.classList.add('on');
+        txt.innerHTML = same
+          ? 'Biometrik <b>aktif</b> di perangkat ini untuk akun <b>' + Util.esc(info.username) + '</b>.'
+          : 'Perangkat ini terdaftar untuk akun lain (<b>' + Util.esc(info.username) + '</b>). ' +
+            'Hapus dahulu bila ingin mendaftarkan akun Anda.';
+        form.classList.toggle('hidden', same);
+        rm.classList.remove('hidden');
+      } else {
+        box.classList.remove('on');
+        txt.textContent = 'Biometrik belum diaktifkan di perangkat ini.';
+        form.classList.remove('hidden'); rm.classList.add('hidden');
+      }
+    });
+  }
+
+  function bioEnroll() {
+    var pass = Util.val('p-bio-pass');
+    if (!pass) return Util.warn('Masukkan password Anda terlebih dahulu.');
+    if (!S.user) return Util.warn('Sesi tidak ditemukan. Silakan masuk kembali.');
+
+    // Pastikan password benar SEBELUM disimpan, agar tidak menyimpan
+    // kredensial salah yang baru ketahuan gagal saat login berikutnya.
+    Api.call('gsLogin', S.user.username, pass).then(function (r) {
+      if (!r.ok) throw new Error('Password salah. Pendaftaran dibatalkan.');
+      return Bio.enroll(S.user.username, pass, S.user.nickname || S.user.name);
+    }).then(function () {
+      Util.setVal('p-bio-pass', '');
+      Util.ok('Biometrik berhasil didaftarkan di perangkat ini.');
+      Util.vibrate(30);
+      refreshBioCard();
+    }).catch(function (e) { Util.err(e.message); });
+  }
+
+  function bioRemove() {
+    Util.confirm(
+      'Hapus pendaftaran biometrik dari perangkat ini? Anda tetap dapat masuk memakai password.',
+      'Hapus Biometrik'
+    ).then(function (yes) {
+      if (!yes) return;
+      Bio.remove().then(function () {
+        Util.ok('Pendaftaran biometrik dihapus.');
+        refreshBioCard();
+      });
     });
   }
 
@@ -1954,6 +2483,7 @@ canvas.chart{width:100%;height:180px;display:block}
     $('profilePhotoPreview').innerHTML = u.profilePhotoId
       ? '<img src="' + esc(thumb(u.profilePhotoId, 200)) + '" alt="foto profil">' : '<span class="small muted">Belum ada foto</span>';
     Util.show('adminCardLink', u.role === 'admin' || u.role === 'pembina');
+    refreshBioCard();
   }
 
   function onProfilePhotoPick(ev) {
@@ -1996,6 +2526,13 @@ canvas.chart{width:100%;height:180px;display:block}
       if (!r.ok) throw new Error(r.error);
       Util.ok('Password berhasil diubah.');
       Util.setVal('p-old', ''); Util.setVal('p-new', '');
+      // Kredensial biometrik menyimpan password lama — cabut agar tidak basi.
+      if (global.Bio && Bio.enrolled()) {
+        Bio.remove().then(function () {
+          Util.warn('Pendaftaran biometrik dibatalkan karena password berubah. Silakan daftarkan ulang.');
+          refreshBioCard();
+        });
+      }
     }).catch(function (e) { Util.err(e.message); });
   }
 
@@ -2307,9 +2844,14 @@ canvas.chart{width:100%;height:180px;display:block}
       Api.call('gsCurrentUser').then(function (r) {
         if (r.ok && r.user) { S.user = r.user; return boot(); }
         $('login-view').classList.remove('hidden');
-      }).catch(function () { $('login-view').classList.remove('hidden'); });
+        refreshBioLogin();
+      }).catch(function () {
+        $('login-view').classList.remove('hidden');
+        refreshBioLogin();
+      });
     } else {
       $('login-view').classList.remove('hidden');
+      refreshBioLogin();
     }
 
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
@@ -2327,6 +2869,8 @@ canvas.chart{width:100%;height:180px;display:block}
     submitSkk: submitSkk, confirmSkk: confirmSkk, claimSku: claimSku,
     saveTarget: saveTarget, exportReport: exportReport, setBoardTab: setBoardTab,
     saveProfile: saveProfile, changePassword: changePassword,
+    togglePass: togglePass, doBioLogin: doBioLogin,
+    bioEnroll: bioEnroll, bioRemove: bioRemove,
     onProfilePhotoPick: onProfilePhotoPick, uploadProfilePhoto: uploadProfilePhoto,
     downloadCard: downloadCard, saveCardDrive: saveCardDrive, shareCard: shareCard,
     setAdminTab: setAdminTab, addUserForm: addUserForm, addUser: addUser, bulkAddUsers: bulkAddUsers,
@@ -2339,5 +2883,5 @@ canvas.chart{width:100%;height:180px;display:block}
 })(window);
 
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a37b836aba5c3e30',t:'MTc4ODg0NDkyNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a37c484e0ddffd95',t:'MTc4ODg1Mjk4OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
