@@ -20,7 +20,11 @@ const SPREADSHEET_ID       = '18gV5HKxVhPEMA7tcD9VmASJmM2FGylb9QTX83tXo5QU';
 const SKK_BASE_FOLDER_ID   = '18xHtG_s61LhEUVR5rAdoRnICU0oUJGsh';
 /** Folder induk tempat SEMUA folder YATRA (bukti, rute, laporan, kartu, profil, aset) dibuat. */
 const YATRA_ROOT_FOLDER_ID = '11oKxXakCkW4KwlEnrwpuHEZ9HxlHwfkM';
-const LOGO_URL             = 'https://cdn.phototourl.com/free/2026-09-08-377dd3b3-e2f2-4ffa-9b25-41d7fcd91f78.png';
+/** Logo resmi YATRA (di-pin ke commit agar tautan tidak pernah berubah isi). */
+const LOGO_URL      = 'https://raw.githubusercontent.com/isramiraj1443-ship-it/YATRA/1bece3303df65f85aad47888af7cfdf314825ead/icons/icon-512.png';
+const LOGO_URL_SM   = 'https://raw.githubusercontent.com/isramiraj1443-ship-it/YATRA/1bece3303df65f85aad47888af7cfdf314825ead/icons/icon-192.png';
+/** Cadangan bila commit di atas suatu saat dihapus. */
+const LOGO_URL_FALLBACK = 'https://raw.githubusercontent.com/isramiraj1443-ship-it/YATRA/main/icons/icon-512.png';
 
 const GUDEP_NAME = 'Gugus Depan';
 const PANGKALAN  = 'Dewan Penggalang';
