@@ -18,7 +18,7 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 const LOGO_FILE = join(root, 'icons', 'icon-inline.png');
 const LOGO_DATA_URI =
   'data:image/png;base64,' + readFileSync(LOGO_FILE).toString('base64');
-const SCRIPTS  = ['api', 'utils', 'charts', 'tracker', 'app'];
+const SCRIPTS  = ['api', 'utils', 'charts', 'tracker', 'biometric', 'app'];
 
 let html = read('index.html');
 const css = read('css/app.css');
