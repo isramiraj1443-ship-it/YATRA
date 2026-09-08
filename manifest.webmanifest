@@ -1,0 +1,73 @@
+{
+  "name": "YATRA — Catatan Perjalanan Pramuka Penggalang",
+  "short_name": "YATRA",
+  "description": "Aplikasi pencatat perjalanan Pramuka Penggalang: lacak rute GPS, SKK Gerak Jalan, checklist SKU digital, lencana, dan papan peringkat regu.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0f14",
+  "theme_color": "#fc4c02",
+  "lang": "id",
+  "dir": "ltr",
+  "categories": [
+    "health",
+    "fitness",
+    "education"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Lacak Rute",
+      "short_name": "Lacak",
+      "url": "/?view=track",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Catat Manual",
+      "short_name": "Catat",
+      "url": "/?view=add",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Papan Peringkat",
+      "short_name": "Peringkat",
+      "url": "/?view=board",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
