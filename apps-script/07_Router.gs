@@ -21,11 +21,26 @@ function healthPayload_() {
   return { ok: true, app: APP_NAME, version: APP_VERSION, time: nowStr_(), tz: getTimeZone_(), plaintext: PASSWORD_PLAINTEXT };
 }
 function gsPing() { return healthPayload_(); }
+
+/** Admin: unduh ulang logo dari GitHub ke Drive (pakai bila logo diganti). */
+function gsAdminRefreshLogo(token) {
+  requireAdmin_(token);
+  const id = refreshLogo_();
+  return id ? { ok: true, data: { fileId: id } }
+            : { ok: false, error: 'Logo gagal diunduh. Periksa URL atau izin UrlFetch.' };
+}
+
+/** Admin: rapikan struktur folder Drive (buat yang kurang, pindahkan yang tercecer). */
+function gsAdminEnsureFolders(token) {
+  requireAdmin_(token);
+  return { ok: true, data: ensureFolders_() };
+}
 function appVersion() { return healthPayload_(); }
 
 /* ------------------------------------------------------------ JSON API */
 /** Semua fungsi yang boleh dipanggil lintas-origin lewat proxy /api/<fn>. */
 const API_FUNCTIONS = [
+  'gsAdminEnsureFolders', 'gsAdminRefreshLogo',
   'gsPing', 'gsLogin', 'gsLogout', 'gsCurrentUser', 'gsInitData',
   'gsSaveProfile', 'gsSaveProfilePhoto', 'gsSetTarget', 'gsChangePassword',
   'gsMyApiKey', 'gsRegenerateApiKey',
