@@ -43,8 +43,32 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fn: fn, token: self.token, args: args })
       }).then(function (res) {
-        if (!res.ok) throw new Error('Server merespons ' + res.status);
-        return res.json();
+        // Selalu baca isi respons: server mengirim pesan error yang berguna
+        // (mis. "GAS_WEB_APP_URL belum diatur") justru saat status bukan 2xx.
+        return res.text().then(function (text) {
+          var data = null;
+          try { data = JSON.parse(text); } catch (e) { /* bukan JSON */ }
+
+          if (!res.ok) {
+            if (data && data.error) {
+              var msg = data.error;
+              if (data.hint) msg += ' (' + String(data.hint).slice(0, 120) + ')';
+              throw new Error(msg);
+            }
+            if (res.status === 500) {
+              throw new Error(
+                'Server bermasalah (500). Biasanya environment variable ' +
+                'GAS_WEB_APP_URL belum diatur di Vercel, atau perlu Redeploy.'
+              );
+            }
+            if (res.status === 404) throw new Error('Endpoint /api tidak ditemukan (404). Periksa vercel.json.');
+            if (res.status === 504) throw new Error('Server Apps Script tidak merespons tepat waktu.');
+            throw new Error('Server merespons ' + res.status + '.');
+          }
+
+          if (!data) throw new Error('Respons server tidak valid: ' + String(text).slice(0, 120));
+          return data;
+        });
       }).then(function (data) {
         var d = self._normalize(data);
         if (d && d.ok === false && /sesi/i.test(d.error || '')) {
