@@ -113,16 +113,39 @@ function getUserDirFolder_(u) {
 }
 
 /* ------------------------------------------------------------------ LOGO */
+/**
+ * Unduh logo sekali lalu simpan di Drive (folder YATRA_Aset).
+ * Setelah tersimpan, aplikasi tidak pernah lagi bergantung pada GitHub —
+ * penting agar kartu pencapaian & laporan tetap berlogo meski tautan mati.
+ */
 function cacheLogo_() {
   try {
     const folder = getDriveFolder_(FOLDER.ASSETS);
     const fl = folder.getFilesByName('yatra_logo.png');
     if (fl.hasNext()) return fl.next().getId();
-    const url = LOGO_URL_();
-    if (!url) return '';
-    const blob = UrlFetchApp.fetch(url).getBlob().setName('yatra_logo.png');
-    return shareAnyone_(folder.createFile(blob)).getId();
+
+    // Coba URL utama (di-pin ke commit), lalu cadangan di branch main.
+    const candidates = [LOGO_URL_(), LOGO_URL_FALLBACK].filter(function (u) { return !!u; });
+    for (let i = 0; i < candidates.length; i++) {
+      try {
+        const res = UrlFetchApp.fetch(candidates[i], { muteHttpExceptions: true, followRedirects: true });
+        if (res.getResponseCode() !== 200) continue;
+        const blob = res.getBlob().setName('yatra_logo.png');
+        if (!blob.getBytes().length) continue;
+        return shareAnyone_(folder.createFile(blob)).getId();
+      } catch (e) { /* coba kandidat berikutnya */ }
+    }
+    return '';
   } catch (e) { return ''; }
+}
+
+/** Paksa unduh ulang logo (pakai bila logo di GitHub diganti). */
+function refreshLogo_() {
+  try {
+    const fl = getDriveFolder_(FOLDER.ASSETS).getFilesByName('yatra_logo.png');
+    while (fl.hasNext()) fl.next().setTrashed(true);
+  } catch (e) {}
+  return cacheLogo_();
 }
 function logoFile_() {
   try {
