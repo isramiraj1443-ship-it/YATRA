@@ -27,12 +27,13 @@
   }
 
   /* =============================================================== LOGIN */
-  function doLogin() {
-    var u = Util.val('l-user'), p = Util.val('l-pass');
+  function doLogin(cred) {
+    var u = (cred && cred.username) || Util.val('l-user');
+    var p = (cred && cred.password) || Util.val('l-pass');
     if (!u || !p) return Util.warn('UserID dan password wajib diisi.');
     var btn = $('loginBtn');
     btn.disabled = true; btn.textContent = 'Memproses…';
-    Api.call('gsLogin', u, p).then(function (r) {
+    return Api.call('gsLogin', u, p).then(function (r) {
       if (!r.ok) throw new Error(r.error || 'Login gagal.');
       Api.setToken(r.token);
       S.user = r.user;
@@ -54,6 +55,126 @@
       $('app').classList.add('hidden');
       $('login-view').classList.remove('hidden');
       Util.setVal('l-pass', '');
+      refreshBioLogin();
+    });
+  }
+
+  /* ========================================================= PASSWORD UI */
+  /** Tombol mata: tampilkan / sembunyikan isi field password. */
+  function togglePass(btn) {
+    var input = $(btn.getAttribute('data-target'));
+    if (!input) return;
+    var show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+    btn.setAttribute('aria-label', (show ? 'Sembunyikan' : 'Tampilkan') + ' password');
+    btn.innerHTML = show
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>' +
+        '<path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>' +
+        '<path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path>' +
+        '<line x1="1" y1="1" x2="23" y2="23"></line></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>' +
+        '<circle cx="12" cy="12" r="3"></circle></svg>';
+    // Kembalikan fokus supaya alur pengetikan tidak terputus.
+    try { input.focus({ preventScroll: true }); } catch (e) {}
+  }
+
+  /* ============================================================ BIOMETRIK */
+  /** Tampilkan tombol "Masuk dengan Biometrik" bila perangkat sudah terdaftar. */
+  function refreshBioLogin() {
+    var wrap = $('bioLoginWrap');
+    if (!wrap || !global.Bio) return;
+    Bio.supported().then(function (ok) {
+      if (!ok || !Bio.enrolled()) { wrap.classList.add('hidden'); return; }
+      var who = Bio.nickname() || Bio.username();
+      $('bioLoginLabel').textContent = who ? 'Masuk sebagai ' + who : 'Masuk dengan Biometrik';
+      wrap.classList.remove('hidden');
+      // Isikan UserID agar jelas akun mana yang akan dipakai.
+      if (!Util.val('l-user')) Util.setVal('l-user', Bio.username());
+    });
+  }
+
+  function doBioLogin() {
+    var btn = $('bioLoginBtn');
+    btn.disabled = true;
+    var label = $('bioLoginLabel'), original = label.textContent;
+    label.textContent = 'Memverifikasi…';
+
+    Bio.authenticate().then(function (cred) {
+      label.textContent = 'Masuk…';
+      return doLogin(cred);
+    }).catch(function (e) {
+      Util.err(e.message);
+    }).then(function () {
+      btn.disabled = false; label.textContent = original;
+    });
+  }
+
+  /** Perbarui kartu biometrik di halaman Profil. */
+  function refreshBioCard() {
+    var card = $('bioCard');
+    if (!card || !global.Bio) return;
+    var box = $('bioStatus'), txt = $('bioStatusText');
+    var form = $('bioEnrollForm'), rm = $('bioRemoveWrap');
+
+    Bio.supported().then(function (ok) {
+      if (!ok) {
+        box.classList.remove('on');
+        txt.innerHTML = 'Perangkat atau browser ini <b>tidak mendukung</b> login biometrik. ' +
+                        'Fitur ini memerlukan HTTPS serta sensor sidik jari / Face ID.';
+        form.classList.add('hidden'); rm.classList.add('hidden');
+        return;
+      }
+      var info = Bio.info();
+      if (info && Bio.enrolled()) {
+        var same = S.user && info.username === S.user.username;
+        box.classList.add('on');
+        txt.innerHTML = same
+          ? 'Biometrik <b>aktif</b> di perangkat ini untuk akun <b>' + Util.esc(info.username) + '</b>.'
+          : 'Perangkat ini terdaftar untuk akun lain (<b>' + Util.esc(info.username) + '</b>). ' +
+            'Hapus dahulu bila ingin mendaftarkan akun Anda.';
+        form.classList.toggle('hidden', same);
+        rm.classList.remove('hidden');
+      } else {
+        box.classList.remove('on');
+        txt.textContent = 'Biometrik belum diaktifkan di perangkat ini.';
+        form.classList.remove('hidden'); rm.classList.add('hidden');
+      }
+    });
+  }
+
+  function bioEnroll() {
+    var pass = Util.val('p-bio-pass');
+    if (!pass) return Util.warn('Masukkan password Anda terlebih dahulu.');
+    if (!S.user) return Util.warn('Sesi tidak ditemukan. Silakan masuk kembali.');
+
+    // Pastikan password benar SEBELUM disimpan, agar tidak menyimpan
+    // kredensial salah yang baru ketahuan gagal saat login berikutnya.
+    Api.call('gsLogin', S.user.username, pass).then(function (r) {
+      if (!r.ok) throw new Error('Password salah. Pendaftaran dibatalkan.');
+      return Bio.enroll(S.user.username, pass, S.user.nickname || S.user.name);
+    }).then(function () {
+      Util.setVal('p-bio-pass', '');
+      Util.ok('Biometrik berhasil didaftarkan di perangkat ini.');
+      Util.vibrate(30);
+      refreshBioCard();
+    }).catch(function (e) { Util.err(e.message); });
+  }
+
+  function bioRemove() {
+    Util.confirm(
+      'Hapus pendaftaran biometrik dari perangkat ini? Anda tetap dapat masuk memakai password.',
+      'Hapus Biometrik'
+    ).then(function (yes) {
+      if (!yes) return;
+      Bio.remove().then(function () {
+        Util.ok('Pendaftaran biometrik dihapus.');
+        refreshBioCard();
+      });
     });
   }
 
@@ -742,6 +863,7 @@
     $('profilePhotoPreview').innerHTML = u.profilePhotoId
       ? '<img src="' + esc(thumb(u.profilePhotoId, 200)) + '" alt="foto profil">' : '<span class="small muted">Belum ada foto</span>';
     Util.show('adminCardLink', u.role === 'admin' || u.role === 'pembina');
+    refreshBioCard();
   }
 
   function onProfilePhotoPick(ev) {
@@ -784,6 +906,13 @@
       if (!r.ok) throw new Error(r.error);
       Util.ok('Password berhasil diubah.');
       Util.setVal('p-old', ''); Util.setVal('p-new', '');
+      // Kredensial biometrik menyimpan password lama — cabut agar tidak basi.
+      if (global.Bio && Bio.enrolled()) {
+        Bio.remove().then(function () {
+          Util.warn('Pendaftaran biometrik dibatalkan karena password berubah. Silakan daftarkan ulang.');
+          refreshBioCard();
+        });
+      }
     }).catch(function (e) { Util.err(e.message); });
   }
 
@@ -1095,9 +1224,14 @@
       Api.call('gsCurrentUser').then(function (r) {
         if (r.ok && r.user) { S.user = r.user; return boot(); }
         $('login-view').classList.remove('hidden');
-      }).catch(function () { $('login-view').classList.remove('hidden'); });
+        refreshBioLogin();
+      }).catch(function () {
+        $('login-view').classList.remove('hidden');
+        refreshBioLogin();
+      });
     } else {
       $('login-view').classList.remove('hidden');
+      refreshBioLogin();
     }
 
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
@@ -1115,6 +1249,8 @@
     submitSkk: submitSkk, confirmSkk: confirmSkk, claimSku: claimSku,
     saveTarget: saveTarget, exportReport: exportReport, setBoardTab: setBoardTab,
     saveProfile: saveProfile, changePassword: changePassword,
+    togglePass: togglePass, doBioLogin: doBioLogin,
+    bioEnroll: bioEnroll, bioRemove: bioRemove,
     onProfilePhotoPick: onProfilePhotoPick, uploadProfilePhoto: uploadProfilePhoto,
     downloadCard: downloadCard, saveCardDrive: saveCardDrive, shareCard: shareCard,
     setAdminTab: setAdminTab, addUserForm: addUserForm, addUser: addUser, bulkAddUsers: bulkAddUsers,
